@@ -46,7 +46,19 @@ convert_ssh_to_config() {
         cat "$temp_file" > ~/.ssh/config
         rm "$temp_file"
         
-        echo "SSH config updated successfully!"
+        # Minimal patch: append Host runpod block if missing
+        if ! grep -Eq '^Host[[:space:]]+runpod$' ~/.ssh/config; then
+          {
+            echo ""
+            echo "Host runpod"
+            echo "    HostName $ip"
+            echo "    User $user"
+            echo "    Port $port"
+          } >> ~/.ssh/config
+          echo "Added new Host runpod block."
+        else
+          echo "Updated existing Host runpod block."
+        fi
     else
         echo "Error: Invalid SSH string format"
         exit 1
