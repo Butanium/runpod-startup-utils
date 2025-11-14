@@ -5,6 +5,7 @@
 # example:
 # - runpodssh.ps1 'ssh root@38.128.233.126 -p 35638'
 # - runpodssh.ps1 'ssh root@38.128.89.126 -p 5987' 2
+# - runpodssh.ps1 'ssh ls0vlr1zps8tmm-64411706@ssh.runpod.io -i ~/.ssh/id_ed25519'
 function Convert-SshToConfig {
     param (
         [Parameter(Mandatory=$true)]
@@ -21,11 +22,20 @@ function Convert-SshToConfig {
         $hostName = "runpod$HostNumber"
     }
     
+    # Remove the 'ssh' prefix if present
+    $SshString = $SshString -replace '^\s*ssh\s+', ''
+    
+    # Remove identity file parameter if present (e.g., -i ~/.ssh/id_ed25519)
+    $SshString = $SshString -replace '\s+-i\s+\S+', ''
+    
     # Extract components using regex
-    if ($SshString -match '([a-zA-Z0-9_-]+)@([0-9.]+)\s+-p\s+([0-9]+)') {
+    # Pattern supports: user@host [-p port]
+    # host can be IP address or domain name
+    # port is optional (defaults to 22)
+    if ($SshString -match '([a-zA-Z0-9_-]+)@([a-zA-Z0-9.-]+)(?:\s+-p\s+([0-9]+))?') {
         $user = $matches[1]
         $ip = $matches[2]
-        $port = $matches[3]
+        $port = if ($matches[3]) { $matches[3] } else { "22" }
         
         # Path to SSH config file
         $configPath = "$env:USERPROFILE\.ssh\config"
@@ -68,7 +78,11 @@ function Convert-SshToConfig {
         Write-Host "You can now connect using: ssh $hostName"
     } else {
         Write-Host "Error: Invalid SSH string format" -ForegroundColor Red
-        Write-Host "Expected format: username@ip.address -p port"
+        Write-Host "Expected format: user@hostname [-p port] [-i identity_file]"
+        Write-Host "Examples:"
+        Write-Host "  - 'ssh user@ip.address -p port'"
+        Write-Host "  - 'ssh user@hostname -i ~/.ssh/id_ed25519'"
+        Write-Host "  - 'ssh user@hostname -p port -i ~/.ssh/id_ed25519'"
         exit 1
     }
 }
@@ -79,6 +93,7 @@ if ($args.Count -lt 1 -or $args.Count -gt 2) {
     Write-Host "Usage: runpodssh 'ssh_string' [host_number]" -ForegroundColor Yellow
     Write-Host "Example: runpodssh 'ssh root@38.128.233.126 -p 35638'"
     Write-Host "Example with host number: runpodssh 'ssh root@38.128.233.126 -p 35638' 1"
+    Write-Host "Example with identity file: runpodssh 'ssh user@ssh.runpod.io -i ~/.ssh/id_ed25519'"
     exit 1
 }
 
