@@ -37,7 +37,10 @@ chmod +x startup_runpod_template.sh
 A PowerShell script that simplifies SSH configuration for RunPod instances by automatically parsing SSH connection strings and adding them to your SSH config file.
 
 **Features:**
-- Parses RunPod SSH connection strings (format: `ssh user@ip -p port`)
+- Parses RunPod SSH connection strings in various formats
+- Supports both IP addresses and domain names (e.g., `ssh.runpod.io`)
+- Handles optional port parameter (defaults to 22)
+- Automatically strips identity file parameters (`-i` flag)
 - Automatically adds/updates SSH host entries in `~/.ssh/config`
 - Supports custom host numbering (e.g., `runpod1`, `runpod2`)
 - Creates backup of existing SSH config before modifications
@@ -45,11 +48,17 @@ A PowerShell script that simplifies SSH configuration for RunPod instances by au
 
 **Usage:**
 ```powershell
-# Basic usage (creates host named "runpod")
+# Basic usage with IP and port (creates host named "runpod")
 .\runpodssh.ps1 'ssh root@38.128.233.126 -p 35638'
 
 # With custom host number (creates host named "runpod2")
 .\runpodssh.ps1 'ssh root@38.128.89.126 -p 5987' 2
+
+# With domain name and identity file (identity file is dropped)
+.\runpodssh.ps1 'ssh ls0vlr1zps8tmm-64411706@ssh.runpod.io -i ~/.ssh/id_ed25519'
+
+# Without port (defaults to port 22)
+.\runpodssh.ps1 'ssh user@hostname.com'
 ```
 
 **Requirements:** Windows PowerShell
